@@ -1,20 +1,29 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/gocolly/colly/v2"
 )
 
 type Question struct {
-	title        string
-	answers      [4]string
-	correctIndex int
+	Title        string    `json:"title"`
+	Answers      [4]string `json:"answers"`
+	CorrectIndex int       `json:"correctIndex"`
 }
 
 func main() {
 	c := colly.NewCollector()
 	questions := []Question{}
+	// Where questions will be saved
+	f, err := os.Create("_out/questions.json")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer f.Close()
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting", r.URL)
@@ -44,14 +53,21 @@ func main() {
 		}
 
 		questions = append(questions, Question{
-			title:        title,
-			answers:      answers,
-			correctIndex: correctIndex,
+			Title:        title,
+			Answers:      answers,
+			CorrectIndex: correctIndex,
 		})
 	})
 
 	c.OnScraped(func(r *colly.Response) {
 		fmt.Printf("Scrape completed, found %v questions.\n", len(questions))
+
+		data, err := json.Marshal(questions)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		f.Write(data)
 	})
 
 	url := "https://www.praktycznyegzamin.pl/inf04/teoria/wszystko/"
