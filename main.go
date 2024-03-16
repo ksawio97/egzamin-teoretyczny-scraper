@@ -11,12 +11,12 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-// TODO add saving videos
 type Question struct {
 	Title        string    `json:"title"`
 	Answers      [4]string `json:"answers"`
 	CorrectIndex int       `json:"correctIndex"`
 	ImagePath    string    `json:"imagePath,omitempty"`
+	VideoPath    string    `json:"videoPath,omitempty"`
 }
 
 func main() {
@@ -25,7 +25,9 @@ func main() {
 	// create output files
 	outputDir := "_out"
 	imagesPath := outputDir + "/images"
-	err := createFoldersStructure(outputDir, imagesPath)
+	videosPath := outputDir + "/videos"
+
+	err := createFoldersStructure(outputDir, imagesPath, videosPath)
 	if err != nil {
 		fmt.Printf("failed to create folders structure: %v", err)
 		return
@@ -65,26 +67,19 @@ func main() {
 			}
 		})
 
-		imgSrc := e.ChildAttr("img", "src")
-		imgName := ""
-		if imgSrc != "" {
-			// parse file name from imgsrc
-			pattern, _ := regexp.Compile(`[^/]+$`)
-			imgName = string(pattern.Find([]byte(imgSrc)))
-			if imgName == "" {
-				fmt.Printf("failed parsing file name from %v", imgSrc)
-				return
-			}
-
-			imgPath := imagesPath + "/" + string(imgName)
-			err := saveFileFromUrl(client, fmt.Sprintf("%v/%v", url, imgSrc), imgPath)
-			if err != nil {
-				fmt.Println(err)
-				imgName = ""
-			}
+		if correctIndex == -1 {
+			return
 		}
 
-		if correctIndex == -1 {
+		imgName, err := saveMedia(client, url, e.ChildAttr("img", "src"), imagesPath)
+		if err != nil {
+			fmt.Printf("Error saving image from url: %v", err)
+			return
+		}
+
+		videoPath, err := saveMedia(client, url, e.ChildAttr("source", "src"), videosPath)
+		if err != nil {
+			fmt.Printf("Error saving video from url: %v", err)
 			return
 		}
 
@@ -93,6 +88,7 @@ func main() {
 			Answers:      answers,
 			CorrectIndex: correctIndex,
 			ImagePath:    imgName,
+			VideoPath:    videoPath,
 		})
 	})
 
@@ -110,18 +106,34 @@ func main() {
 	c.Visit(url)
 }
 
-func createFoldersStructure(outputDir, imagesPath string) error {
-	// Create file where questions will be saved
-	err := os.MkdirAll(outputDir, 0777)
-	if err != nil {
-		return fmt.Errorf("failed creating %v file: %v", outputDir, err)
+func saveMedia(client *http.Client, url, htmlSrc, saveFolder string) (string, error) {
+	name := ""
+	if htmlSrc != "" {
+		// parse file name from imgsrc
+		pattern, _ := regexp.Compile(`[^/]+$`)
+		name = string(pattern.Find([]byte(htmlSrc)))
+		if name == "" {
+			return "", fmt.Errorf("failed parsing file name from %v", htmlSrc)
+		}
+
+		mediaPath := saveFolder + "/" + name
+		err := saveFileFromUrl(client, fmt.Sprintf("%v/%v", url, htmlSrc), mediaPath)
+		if err != nil {
+			return "", fmt.Errorf("failed saving file to %v from url %v: %v", mediaPath, url, err)
+		}
 	}
 
-	// Create dir where images will be saved
-	err = os.MkdirAll(imagesPath, 0777)
-	if err != nil {
-		return fmt.Errorf("failed creating %v directory: %v", imagesPath, err)
+	return name, nil
+}
+
+func createFoldersStructure(dirs ...string) error {
+	for i := range dirs {
+		err := os.MkdirAll(dirs[i], 0777)
+		if err != nil {
+			return fmt.Errorf("failed creating %v: %v", dirs[i], err)
+		}
 	}
+
 	return nil
 }
 
