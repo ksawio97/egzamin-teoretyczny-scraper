@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 
 	"github.com/gocolly/colly"
 )
+
+var titlePrefixPattern = regexp.MustCompile(`^(\d+)\. `)
 
 // it scrapes data from website and saves everything in defined directory
 func Scrape(questionsFile *os.File, options egzaminteoretycznyscraper.Options) {
@@ -28,6 +31,10 @@ func Scrape(questionsFile *os.File, options egzaminteoretycznyscraper.Options) {
 
 	c.OnHTML(".question", func(e *colly.HTMLElement) {
 		title := e.ChildText(".title")
+		if options.RmTitlePrefix {
+			title = removeTitlePrefix(title)
+		}
+
 		// expected only 4 answers
 		answers := [4]string{}
 		correctIndex := -1
@@ -38,6 +45,9 @@ func Scrape(questionsFile *os.File, options egzaminteoretycznyscraper.Options) {
 					correctIndex = i
 				}
 				answers[i] = h.Text
+				if options.RmAnswerPrefix {
+					answers[i] = removeAnswerPrefix(answers[i])
+				}
 			}
 		})
 
@@ -78,4 +88,14 @@ func Scrape(questionsFile *os.File, options egzaminteoretycznyscraper.Options) {
 	})
 
 	c.Visit(options.Url)
+}
+
+// removes question number from title
+func removeTitlePrefix(title string) string {
+	return titlePrefixPattern.ReplaceAllLiteralString(title, "")
+}
+
+// removes answer prefix ([ABCD]. )
+func removeAnswerPrefix(answer string) string {
+	return answer[3:]
 }

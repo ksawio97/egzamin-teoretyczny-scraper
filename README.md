@@ -29,9 +29,31 @@ You can run web scraper with following command:
 ```bash
 make run
 ```
-You can change default _out folder and **scrape url** by modifying OUTPUTFILE variable inside Makefile.
 
-Questions in questions.json file will have following parameters:
+## Makefile Variables for ```make run```
+### 1. `OUTPUTFILE`
+
+- **Description**: Defines the output directory where the scraped data will be stored.
+- **Example**: `OUTPUTFILE=_out`
+
+### 2. `URL`
+
+- **Description**: Specifies the URL of the website that will be scraped.
+- **Example**: `URL=https://www.praktycznyegzamin.pl/inf04/teoria/wszystko/`
+
+### 3. `REMOVETITLEPREFIX`
+
+- **Description**: Determines whether the scraper should remove title prefixes during scraping. 
+  - `true`: Title prefixes will be removed.
+  - `false`: Title prefixes will not be removed.
+- **Example**: `REMOVETITLEPREFIX=true`
+
+### 4. `REMOVEANSWERPREFIX`
+
+- **Description**: Controls whether the scraper should remove answer prefixes during scraping.
+  - `true`: Answer prefixes will be removed.
+  - `false`: Answer prefixes will not be removed.
+- **Example**: `REMOVEANSWERPREFIX=true`
 
 ## Output Structure
 The scraper will generate the following structure in the specified output directory:

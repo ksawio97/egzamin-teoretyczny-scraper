@@ -8,12 +8,14 @@ import (
 	"regexp"
 )
 
+var getFileNamePattern = regexp.MustCompile(`[^/]+$`)
+
+// downloads media from url into local dir
 func SaveMedia(client *http.Client, url, htmlSrc, saveFolder string) (string, error) {
 	name := ""
 	if htmlSrc != "" {
-		// parse file name from imgsrc
-		pattern, _ := regexp.Compile(`[^/]+$`)
-		name = string(pattern.Find([]byte(htmlSrc)))
+		// parse file name from html src
+		name = string(getFileNamePattern.Find([]byte(htmlSrc)))
 		if name == "" {
 			return "", fmt.Errorf("failed parsing file name from %v", htmlSrc)
 		}
@@ -28,6 +30,7 @@ func SaveMedia(client *http.Client, url, htmlSrc, saveFolder string) (string, er
 	return name, nil
 }
 
+// creates file for media downloaded and downloads it from url
 func saveFileFromUrl(client *http.Client, url, path string) error {
 	body, err := fileFromUrl(client, url)
 	if err != nil {
@@ -48,6 +51,7 @@ func saveFileFromUrl(client *http.Client, url, path string) error {
 	return nil
 }
 
+// retrives reader from url
 func fileFromUrl(client *http.Client, url string) (io.ReadCloser, error) {
 	response, err := client.Get(url)
 	if err != nil {

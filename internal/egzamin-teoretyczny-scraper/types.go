@@ -9,8 +9,10 @@ type Question struct {
 }
 
 type Options struct {
-	Url    string // url of website to scrape
-	Output string // directory for ouput files
-	Videos string // directory for videos
-	Images string // directory for images
+	Url            string // url of website to scrape
+	Output         string // directory for ouput files
+	Videos         string // directory for videos
+	Images         string // directory for images
+	RmTitlePrefix  bool   // remove title prefix
+	RmAnswerPrefix bool   // remove answer prefix
 }

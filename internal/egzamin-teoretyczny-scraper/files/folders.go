@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// creates folders structure witch will be used for saving questions data
 func SetupStructure(options egzaminteoretycznyscraper.Options) (*os.File, error) {
 	err := createDirs(options.Output, options.Images, options.Videos)
 	if err != nil {
@@ -19,6 +20,8 @@ func SetupStructure(options egzaminteoretycznyscraper.Options) (*os.File, error)
 
 	return f, nil
 }
+
+// creates multiple empty directories
 func createDirs(dirs ...string) error {
 	for i := range dirs {
 		err := os.MkdirAll(dirs[i], 0777)
